@@ -223,9 +223,8 @@ table(data$gameTypeId,data$teamName)%>% knitr::kable(caption = "Type Id and game
 
 ```{r,message=FALSE}
 newData1<-wrapper(modifier = 'franchise-goalie-records?cayenneExp=franchiseId', franchiseid  = 20)
-#newData1
-newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(gamesPlayed), med = median(gamesPlayed), var = var(gamesPlayed), IQR = IQR(gamesPlayed))
-newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(mostWinsOneSeason), med = median(mostWinsOneSeason), var = var(mostWinsOneSeason), IQR = IQR(mostWinsOneSeason))
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(gamesPlayed), med = median(gamesPlayed), var = var(gamesPlayed), IQR = IQR(gamesPlayed)) %>%knitr::kable(caption = "Numeric summaries for games palyed")
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(mostWinsOneSeason), med = median(mostWinsOneSeason), var = var(mostWinsOneSeason), IQR = IQR(mostWinsOneSeason)) %>%knitr::kable(caption = "Numeric summaries for most wins")
 ```
 
 ## Plots

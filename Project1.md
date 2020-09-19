@@ -14,7 +14,7 @@ library(jsonlite)
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ──────────────────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──
+    ## ── Attaching packages ─────────────────────────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──
 
     ## ✓ ggplot2 3.3.2     ✓ purrr   0.3.4
     ## ✓ tibble  3.0.3     ✓ dplyr   1.0.2
@@ -31,7 +31,7 @@ library(tidyverse)
 
     ## Warning: package 'dplyr' was built under R version 3.6.2
 
-    ## ── Conflicts ─────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ── Conflicts ────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
     ## x dplyr::filter()  masks stats::filter()
     ## x purrr::flatten() masks jsonlite::flatten()
     ## x dplyr::lag()     masks stats::lag()
@@ -333,25 +333,26 @@ Type Id and games played
 
 ``` r
 newData1<-wrapper(modifier = 'franchise-goalie-records?cayenneExp=franchiseId', franchiseid  = 20)
-#newData1
-newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(gamesPlayed), med = median(gamesPlayed), var = var(gamesPlayed), IQR = IQR(gamesPlayed))
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(gamesPlayed), med = median(gamesPlayed), var = var(gamesPlayed), IQR = IQR(gamesPlayed)) %>%knitr::kable(caption = "Numeric summaries for games palyed")
 ```
 
-    ## # A tibble: 2 x 5
-    ##   activePlayer   avg   med    var   IQR
-    ##   <lgl>        <dbl> <dbl>  <dbl> <dbl>
-    ## 1 FALSE         92.0    51 15418.  81.8
-    ## 2 TRUE          85.2    39 10054. 143
+| activePlayer |      avg | med |      var |    IQR |
+| :----------- | -------: | --: | -------: | -----: |
+| FALSE        | 92.02941 |  51 | 15418.15 |  81.75 |
+| TRUE         | 85.20000 |  39 | 10054.20 | 143.00 |
+
+Numeric summaries for games palyed
 
 ``` r
-newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(mostWinsOneSeason), med = median(mostWinsOneSeason), var = var(mostWinsOneSeason), IQR = IQR(mostWinsOneSeason))
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(mostWinsOneSeason), med = median(mostWinsOneSeason), var = var(mostWinsOneSeason), IQR = IQR(mostWinsOneSeason)) %>%knitr::kable(caption = "Numeric summaries for most wins")
 ```
 
-    ## # A tibble: 2 x 5
-    ##   activePlayer   avg   med   var   IQR
-    ##   <lgl>        <dbl> <dbl> <dbl> <dbl>
-    ## 1 FALSE         13.3  12.5  125.    14
-    ## 2 TRUE          13.2   7    202.    26
+| activePlayer |      avg |  med |     var | IQR |
+| :----------- | -------: | ---: | ------: | --: |
+| FALSE        | 13.29412 | 12.5 | 125.426 |  14 |
+| TRUE         | 13.20000 |  7.0 | 201.700 |  26 |
+
+Numeric summaries for most wins
 
 ## Plots
 
