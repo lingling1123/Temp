@@ -1,0 +1,265 @@
+---
+title: "Project1"
+output:
+  rmarkdown::github_document:
+  toc: true
+---
+
+
+```{r,eval=FALSE,echo=FALSE}
+rmarkdown::render('Project1.Rmd',output_file='README.md')
+```
+
+# Required function
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(devtools)
+```
+
+
+
+
+# Records API
+```{r,message=FALSE}
+base1<-'https://records.nhl.com/site/api/'
+franchise<-function( modifier){
+ franchise<-content(GET(paste0(base1,modifier)),'text') 
+ franchise<-fromJSON(franchise,flatten=TRUE)
+ franchise[[1]]
+}
+
+teamTotal<-function(modifier){
+ teamTotal<-content(GET(paste0(base1,modifier)),'text') 
+ teamTotal<-fromJSON(teamTotal,flatten=TRUE)
+ teamTotal[[1]]
+}
+
+
+seasonrd<-function(modifier,franchiseid){
+# condition of input a number 
+  if(is.numeric(franchiseid)){
+   full<-paste0(base1,modifier,'=',franchiseid)
+   seasonrd<-content(GET(full),'text')
+   seasonrd<-fromJSON(seasonrd,flatten=TRUE)
+   seasonrd[[1]]
+  }
+# condition of input team name: go back to franchiseId data and filter 
+ else{
+   full<-paste0(base1,modifier)
+   seasonrd<-content(GET(full),'text')
+   seasonrd<-fromJSON(seasonrd,flatten=TRUE)
+   seasonrd<-filter(seasonrd[[1]],franchiseName==franchiseid)
+   seasonrd[[1]]
+ }
+}
+
+goalie<-function(modifier,franchiseid){
+  if(is.numeric(franchiseid)){
+   full<-paste0(base1,modifier,'=',franchiseid)
+   goalie<-content(GET(full),'text')
+   goalie<-fromJSON(goalie,flatten=TRUE)
+   goalie[[1]]
+ }
+ else{
+   full<-paste0(base1,modifier)
+   goalie<-content(GET(full),'text')
+   goalie<-fromJSON(goalie,flatten=TRUE)
+   goalie<-filter(goalie[[1]],franchiseName==franchiseid)
+   goalie[[1]]
+ }
+}
+
+
+
+skater<-function(modifier,franchiseid){
+ if(is.numeric(franchiseid)){
+   full<-paste0(base1,modifier,'=',franchiseid)
+   skater<-content(GET(full),'text')
+   skater<-fromJSON(skater,flatten=TRUE)
+   skater[[1]]
+ }
+ else{
+   full<-paste0(base1,modifier)
+   skater<-content(GET(full),'text')
+   skater<-fromJSON(skater,flatten=TRUE)
+   skater<-filter(skater[[1]],franchiseName==franchiseid)
+   skater[[1]]
+ }
+}
+
+
+
+
+```
+
+
+
+# Stats API
+```{r,message=FALSE}
+
+base<-'https://statsapi.web.nhl.com/api/v1/teams'
+stats<-function(modifier,teamID){
+ full<-paste0(base,modifier)
+  if(modifier=='?expand=team.roster'){
+    roster<-content(GET(full),'text')  
+    roster<-fromJSON( roster,flatten=TRUE)  
+    a<-roster[[2]]
+    rowa<-filter(a,id==1)
+    b<-a$roster.roster[[1]]
+    b$id=c(rep(c(1),nrow(b)))
+    dat<-full_join(a,b,by='id')
+     for(i in 2:nrow(a)){
+      rowa<-a%>%filter(id==i)  
+      b<-a$roster.roster[[i]]
+      b$id=c(rep(c(i),nrow(b)))
+      new<-full_join(rowa,b,by='id')
+      dat<-rbind(dat,new)
+  }
+  return (dat)
+}
+  else if(modifier=='?expand=person.names'){
+    person.names<-content(GET(full),'text')  
+    person.names<-fromJSON(person.names,flatten=TRUE) 
+    person.names[[2]]
+  }
+  else if(modifier=='?expand=team.schedule.next'){
+    team.schedule.next<-content(GET(full),'text')  
+    team.schedule.next<-fromJSON(team.schedule.next,flatten=TRUE) 
+    team.schedule.next[[2]]
+}
+  else if(modifier=='?expand=team.schedule.previous'){
+     team.schedule.previous<-content(GET(full),'text')
+     team.schedule.previous<-fromJSON(team.schedule.previous,flatten=TRUE)   
+     team.schedule.previous[[2]]
+    
+  }
+  else if(modifier=='?expand=team.stats'){
+     team.stats<-content(GET(full),'text')
+     team.stats<-fromJSON(team.stats,flatten=TRUE)   
+     team.stats[[2]]
+  }
+  else if(modifier=='?expand=team.roster&season='){
+
+    team.roster_season<-content(GET(paste0(full,teamID)),'text')
+    team.roster_season<-fromJSON(team.roster_season,flatten=TRUE)   
+    team.roster_season[[2]]
+  }
+  else if(modifier=='?teamId='){
+    teamId<-content(GET(paste0(full,teamID)),'text')
+    teamId<-fromJSON(teamId,flatten=TRUE)   
+    teamId[[2]]
+  }
+  else if(modifier=='?stats=statsSingleSeasonPlayoffs'){
+    statsSingleSeasonPlayoffs<-content(GET(full),'text')
+    statsSingleSeasonPlayoffs<-fromJSON(statsSingleSeasonPlayoffs,flatten=TRUE)   
+    statsSingleSeasonPlayoffs[[2]]
+  }
+}
+
+
+```
+# One-stop-shop function
+
+```{r,message=FALSE}  
+wrapper<-function(modifier,teamID,franchiseid){
+ if(modifier=='franchise'){
+   franchise(modifier)
+ }
+  else if(modifier=='franchise-team-totals'){
+   teamTotal(modifier) 
+  }
+  else if(modifier=='franchise-season-records?cayenneExp=franchiseId'){
+   seasonrd(modifier,franchiseid) 
+  }
+  else if(modifier=='franchise-goalie-records?cayenneExp=franchiseId'){
+   goalie(modifier,franchiseid)
+    
+  }
+  else if(modifier=='franchise-skater-records?cayenneExp=franchiseId'){
+    skater(modifier,franchiseid)
+    
+  }
+  else {
+    stats(modifier,teamID)
+  }
+}
+```
+
+# Qyeary data
+
+## Create new variables
+
+```{r,message=FALSE}
+#combine two data sets
+a<- wrapper("franchise-team-totals")
+b<- wrapper("?expand=person.names")
+combine<-left_join(a,a,by = "franchiseId")
+head(combine)
+```
+
+
+```{r,message=FALSE}
+# create new variables
+combine$homelosspercent<-combine$homeLosses.x/100
+combine$roadLosses.x<-combine$roadLosses.x/100
+
+```
+
+## Contingency Tables
+
+```{r,message=FALSE}
+#contigency table
+data5 <-wrapper('?expand=team.roster&season=', teamID= "20122013")
+table(data5$active,data5$venue.name)%>% knitr::kable(caption = "Active and venue.name")
+data<-wrapper('franchise-team-totals')
+table(data$gameTypeId,data$teamName)%>% knitr::kable(caption = "Type Id and games played")
+
+
+```
+
+## Numerical Summaries
+
+```{r,message=FALSE}
+newData1<-wrapper(modifier = 'franchise-goalie-records?cayenneExp=franchiseId', franchiseid  = 20)
+#newData1
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(gamesPlayed), med = median(gamesPlayed), var = var(gamesPlayed), IQR = IQR(gamesPlayed))
+newData1 %>% group_by(activePlayer) %>% summarise(avg = mean(mostWinsOneSeason), med = median(mostWinsOneSeason), var = var(mostWinsOneSeason), IQR = IQR(mostWinsOneSeason))
+```
+
+## Plots
+### (1) Bar Plot
+```{r,message=FALSE}
+data6<- wrapper( modifier = "?expand=team.stats")
+g1 <- ggplot(data = data6, aes(x=firstYearOfPlay))
+g1 + geom_bar() + labs(x = "First Year Of Play")
+```
+
+### (2) Histogram
+
+```{r,message=FALSE}
+g2<-ggplot(newData1,aes(x=mostWinsOneSeason, y =..density..))
+g2+geom_histogram(bins = 10)+geom_density(adjust = 0.3,color="blue",lwd=2)+labs(y="Density",title = "Histogram for Wins One Season")
+```
+
+### (3) Box Plot
+```{r,message=FALSE}
+g3<- ggplot(newData1,aes(x=gamesPlayed,y= activePlayer))
+g3+geom_boxplot(size=0.1)+geom_point(position = "jitter",aes(group = activePlayer, col= activePlayer),size=2)+labs(title = "Boxplot for gamesPlayed")
+```
+
+### (4) Scatter Plot
+```{r,message=FALSE}
+g4<-ggplot(newData1,aes(group=gameTypeId,x = shutouts, y = wins))
+g4+geom_point(aes(color=shutouts),size=0.5)+geom_smooth(method = lm,color = "blue")+labs(title = "Shutouts vs Wins") 
+```
+
+### (5) Histogram
+```{r,message=FALSE}
+g2<-ggplot(newData1,aes(x=mostShotsAgainstOneGame, y =..density..))
+g2+geom_histogram(bins = 10)+geom_density(adjust = 0.4,color="green",lwd=2,outline.type = "full")+labs(y="Density",title = "Histogram for Most Shots Against one Game")
+```
+
+
+
